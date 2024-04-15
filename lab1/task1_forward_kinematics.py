@@ -18,7 +18,7 @@ def part2_one_pose(viewer, bvh_file_path):
     """
     joint_name, joint_parent, joint_offset = part1_calculate_T_pose(bvh_file_path)
     motion_data = load_motion_data(bvh_file_path)
-    joint_positions, joint_orientations = part2_forward_kinematics(joint_name, joint_parent, joint_offset, motion_data, 0)
+    joint_positions, joint_orientations = part2_forward_kinematics(joint_name, joint_parent, joint_offset, motion_data, 100)
     viewer.show_pose(joint_name, joint_positions, joint_orientations)
     viewer.run()
 
@@ -36,6 +36,9 @@ def part2_animation(viewer, bvh_file_path):
             self.current_frame = 0
         def update_func(self, viewer_):
             joint_positions, joint_orientations = part2_forward_kinematics(joint_name, joint_parent, joint_offset, motion_data, self.current_frame)
+            # VIS joint_positions 
+
+
             viewer.show_pose(joint_name, joint_positions, joint_orientations)
             self.current_frame = (self.current_frame + 1) % frame_num
     handle = UpdateHandle()
@@ -78,11 +81,11 @@ def main():
     # part1(viewer, bvh_file_path)
 
     # part2
-    # part2_one_pose(viewer, bvh_file_path)
+    part2_one_pose(viewer, bvh_file_path)
     # part2_animation(viewer, bvh_file_path)
 
     # part3
-    part3_retarget(viewer, "data/walk60.bvh", "data/A_pose_run.bvh")
+    # part3_retarget(viewer, "data/walk60.bvh", "data/A_pose_run.bvh")
 
 
 if __name__ == "__main__":
