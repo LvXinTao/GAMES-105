@@ -23,7 +23,7 @@ class CharacterController():
             'motion_material/idle.bvh',
             'motion_material/walk_forward.bvh',
             # 'motion_material/run_forward.bvh',
-            # 'motion_material/walkF.bvh',
+            'motion_material/walkF.bvh',
             'motion_material/walk_and_ture_right.bvh',
             'motion_material/walk_and_turn_left.bvh'
         ]
@@ -511,35 +511,35 @@ class MotionMatchingDatabase:
                 curr_cost=transition_cost
                 curr_cost+=np.sum(np.square(query_normalized-\
                                             np.clip(query_normalized,self.bound_lr_min[i_lr],self.bound_lr_max[i_lr])))
-            # if distance is greater than current best jump to next box
-            if curr_cost>=best_cost:
-                i=i_lr_next
-                continue
-            # Check against small box
-            while i<i_lr_next and i<range_end:
-                # Find index of current and next small box
-                i_sm=i//self.BOUND_SM_SIZE
-                i_sm_next=(i_sm+1)*self.BOUND_SM_SIZE
-                # Find distance to box
-                curr_cost=transition_cost
-                curr_cost+=np.sum(np.square(query_normalized-\
-                                            np.clip(query_normalized,self.bound_sm_min[i_sm],self.bound_sm_max[i_sm])))
-            if curr_cost>=best_cost:
-                i=i_sm_next
-                continue
-            # Search inside small box
-            while i<i_sm_next and i<range_end:
-                # Skip surrounding frames
-                if curr_index!=-1 and abs(i-curr_index)<ignore_surrounding:
-                    i+=1
+                # if distance is greater than current best jump to next box
+                if curr_cost>=best_cost:
+                    i=i_lr_next
                     continue
-                # Check against each frame inside small box
-                curr_cost=transition_cost
-                curr_cost+=np.sum(np.square(query_normalized-self.features[i]))
-                if curr_cost<best_cost:
-                    best_index=i
-                    best_cost=curr_cost
-                i+=1
+                # Check against small box
+                while i<i_lr_next and i<range_end:
+                    # Find index of current and next small box
+                    i_sm=i//self.BOUND_SM_SIZE
+                    i_sm_next=(i_sm+1)*self.BOUND_SM_SIZE
+                    # Find distance to box
+                    curr_cost=transition_cost
+                    curr_cost+=np.sum(np.square(query_normalized-\
+                                                np.clip(query_normalized,self.bound_sm_min[i_sm],self.bound_sm_max[i_sm])))
+                    if curr_cost>=best_cost:
+                        i=i_sm_next
+                        continue
+                    # Search inside small box
+                    while i<i_sm_next and i<range_end:
+                        # Skip surrounding frames
+                        if curr_index!=-1 and abs(i-curr_index)<ignore_surrounding:
+                            i+=1
+                            continue
+                        # Check against each frame inside small box
+                        curr_cost=transition_cost
+                        curr_cost+=np.sum(np.square(query_normalized-self.features[i]))
+                        if curr_cost<best_cost:
+                            best_index=i
+                            best_cost=curr_cost
+                        i+=1
 
         return best_index,best_cost
 
