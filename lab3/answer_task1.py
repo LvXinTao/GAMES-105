@@ -12,15 +12,33 @@ def part1_cal_torque(pose, physics_info: PhysicsInfo, **kargs):
     输出： global_torque: (20,3)的numpy数组，表示每个关节的全局坐标下的目标力矩，根节点力矩会被后续代码无视
     '''
     # ------一些提示代码，你可以随意修改------------#
-    kp = kargs.get('kp', 500) # 需要自行调整kp和kd！ 而且也可以是一个数组，指定每个关节的kp和kd
+    kp = kargs.get('kp', 300) # 需要自行调整kp和kd！ 而且也可以是一个数组，指定每个关节的kp和kd
     kd = kargs.get('kd', 20) 
     parent_index = physics_info.parent_index
     joint_name = physics_info.joint_name
     joint_orientation = physics_info.get_joint_orientation()
     joint_avel = physics_info.get_body_angular_velocity()
-
     global_torque = np.zeros((20,3))
-    
+    # Get rotation and angular velocity realtive to parent
+    joint_rotation=[]
+    joint_relative_avel=[]
+    for i in range(len(joint_name)):
+        parent_idx=parent_index[i]
+        if parent_idx==0:
+            joint_rotation.append(joint_orientation[i])
+            joint_relative_avel.append(joint_avel[i])
+        else:
+            joint_rotation.append((R.from_quat(joint_orientation[parent_idx]).inv()*R.from_quat(joint_orientation[i])).as_quat())
+            joint_relative_avel.append(R.from_quat(joint_orientation[parent_idx]).inv().apply(joint_avel[i]-joint_avel[parent_idx]))
+    # PD Control
+    for i in range(len(joint_name)):
+        parent_idx=parent_index[i]
+        torque = kp * (R.from_quat(joint_rotation[i]).inv()*R.from_quat(pose[i])).as_rotvec() - kd * joint_relative_avel[i]
+        if parent_idx!=0:
+            global_torque[i] = R.from_quat(joint_orientation[parent_idx]).apply(torque)
+        else:
+            global_torque[i] = torque
+
     return global_torque
 
 def part2_cal_float_base_torque(target_position, pose, physics_info, **kargs):
@@ -33,10 +51,12 @@ def part2_cal_float_base_torque(target_position, pose, physics_info, **kargs):
         2. global_torque[0]在track静止姿态时会被无视，但是track走路时会被加到根节点上，不然无法保持根节点朝向
     '''
     global_torque = part1_cal_torque(pose, physics_info)
-    kp = kargs.get('root_kp', 4000) # 需要自行调整root的kp和kd！
+    kp = kargs.get('root_kp', 2000) # 需要自行调整root的kp和kd！
     kd = kargs.get('root_kd', 20)
     root_position, root_velocity = physics_info.get_root_pos_and_vel()
     global_root_force = np.zeros((3,))
+    # PD control for root
+    global_root_force= kp * (target_position - root_position) - kd * root_velocity
     return global_root_force, global_torque
 
 def part3_cal_static_standing_torque(bvh: BVHMotion, physics_info):
